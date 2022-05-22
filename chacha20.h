@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
+
+#ifndef CHACHA20_H
+#define CHACHA20_H
 
 #ifdef __cplusplus 
 extern "C" {
@@ -20,6 +24,7 @@ typedef struct
 #define KEY_LENGTH 32
 #define KEY_VERSION_LENGTH 2  
 #define NONCE_LENGTH 12
+#define MAX_VALUE_NONCE (unsigned long)(pow(2, NONCE_LENGTH) - 1)
 
 #define BASE_VALUE_FOR_CLIENT_NONCE 100
 #define BASE_VALUE_FOR_SERVER_NONCE 200
@@ -54,11 +59,12 @@ struct chacha20_context
 };
 
 int chacha20_libgcrypt_init(char * chacha20SymKey, int print_raw_encryption_logs);
-int chacha20_libgcrypt_encrypt_decrypt(char * input_msg_buf, int input_msg_len, uint8_t key_buf[], 
-        int keylen, uint8_t nonce_buf[], int nonce_len, char result[], int print_raw_encryption_logs);
+int chacha20_libgcrypt_encrypt_decrypt(char * input_msg_buf, int input_msg_len, AUTH_DATA auth_data, char result[], int print_raw_encryption_logs);
 
 int update_nonce(char * role, int sts);
 
 #ifdef __cplusplus 
 }
 #endif 
+
+#endif

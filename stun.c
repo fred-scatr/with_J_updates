@@ -702,8 +702,7 @@ void stun_loop(char *role, int fd_tun, int *fd_net, int msg_request_socket)
 					printf("calling encrypt-decrypt (encrypt tunnel to netwk), role = %c\n", (char)*role);
 
 				retval = chacha20_libgcrypt_encrypt_decrypt(tempbuff_start_of_stun_header, tmp_packet+sizeof(STUNHEADER),
-														auth_data[sts].key, KEY_LENGTH,
-														auth_data[sts].nonce, NONCE_LENGTH, result, print_raw_encryption_logs);
+														auth_data[sts], result, print_raw_encryption_logs);
 				if (print_raw_encryption_logs >= 1)
 					printf(" num bytes encrypted = %d\n", retval);
 			}
@@ -788,8 +787,7 @@ void stun_loop(char *role, int fd_tun, int *fd_net, int msg_request_socket)
 						printf("\ncalling encrypt-decrypt (decrypt netwk to tunnel), role = %c\n", (char)*role);
 
 					retval = chacha20_libgcrypt_encrypt_decrypt(bptr->buff + NONCE_LENGTH, tmp_packet - NONCE_LENGTH,
-															auth_data[lp].key, KEY_LENGTH,
-															auth_data[lp].nonce, NONCE_LENGTH, result, print_raw_encryption_logs);
+															auth_data[lp], result, print_raw_encryption_logs);
 					if (print_raw_encryption_logs >= 1)
 						printf(" num bytes decrypted = %d\n", retval);
 				}
@@ -1053,25 +1051,28 @@ int update_nonce(char *role, int sts)
 
 		if(*role == 'C')
 		{
+			printf("max value of nonce: %ld\n",MAX_VALUE_NONCE );
 			auth_data[sts].client_cntr_nonce++;
+			if(auth_data[sts].client_cntr_nonce > MAX_VALUE_NONCE)
+				auth_data[sts].client_cntr_nonce = BASE_VALUE_FOR_CLIENT_NONCE;
 			memset(auth_data[sts].nonce, 0, sizeof(auth_data[sts].nonce));
 			printf("1 libg nonce: client.cntr_nonce: %ld\n",auth_data[sts].client_cntr_nonce ); 
 			print_buf(auth_data[sts].nonce, NONCE_LENGTH);		
-			memcpy(auth_data[sts].nonce, (uint8_t *)&auth_data[sts].client_cntr_nonce,  sizeof(auth_data[sts].client_cntr_nonce));
+			memcpy(auth_data[sts].nonce, (uint8_t *)&auth_data[sts].client_cntr_nonce, NONCE_LENGTH);
 			printf("2 libg nonce: "); 
 			print_buf((uint8_t *)auth_data[sts].nonce, NONCE_LENGTH);		
 			if(print_raw_encryption_logs >= 1)
-				printf("counter nonce: %ld, size of client_cntr_nonce: %ld\n", auth_data[sts].client_cntr_nonce, 
-				sizeof(auth_data[sts].client_cntr_nonce));	
+				printf("counter nonce: %ld, size of client_cntr_nonce: %d\n", auth_data[sts].client_cntr_nonce, NONCE_LENGTH);	
 		}
 		if(*role == 'S')
 		{
 			auth_data[sts].server_cntr_nonce++;
+			if(auth_data[sts].server_cntr_nonce > MAX_VALUE_NONCE)
+				auth_data[sts].server_cntr_nonce = BASE_VALUE_FOR_SERVER_NONCE;			
 			memset(auth_data[sts].nonce, 0, sizeof(auth_data[sts].nonce));
-			memcpy(auth_data[sts].nonce, (uint8_t *)&auth_data[sts].server_cntr_nonce,  sizeof(auth_data[sts].server_cntr_nonce));
+			memcpy(auth_data[sts].nonce, (uint8_t *)&auth_data[sts].server_cntr_nonce,  NONCE_LENGTH);
 			if(print_raw_encryption_logs >= 1)
-				printf("counter nonce: %ld, size of server_cntr_nonce: %ld\n", auth_data[sts].server_cntr_nonce, 
-				sizeof(auth_data[sts].server_cntr_nonce));			
+				printf("counter nonce: %ld, size of server_cntr_nonce: %d\n", auth_data[sts].server_cntr_nonce, NONCE_LENGTH);			
 		}
 
 		if(print_raw_encryption_logs >= 1)
