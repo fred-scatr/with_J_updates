@@ -5,7 +5,7 @@
 int msg_request_socket;
 time_t time_last_key_rotation, current_time;
 unsigned char key_rotation_required = 0;
-extern int update_key_from_server(uint8_t key_buf[], int key_size);
+extern int update_key_from_server(uint8_t key_buf[], int key_size, uint8_t key_version);
 
 int send_msg(message msg, char *role)  // server to client or  client to server
 {
@@ -128,13 +128,15 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 uint8_t key_buf[SYMMETRIC_KEY_SIZE_BYTES]; // 
                 hkdf(key_buf, SYMMETRIC_KEY_SIZE_BYTES);
                 print_buf_char(key_buf, SYMMETRIC_KEY_SIZE_BYTES);
-                printf(" server updating key in stun\n");
-                update_key_from_server(key_buf, SYMMETRIC_KEY_SIZE_BYTES);  // get an updated key
-                printf(" server sending symm key to client\n");
+
                 // increment symmetric key version to send to client
                 uint16_t next_key_version = get_next_key_version();
                 printf(" next version of key: %d\n", next_key_version);
-
+                
+                printf(" server updating key in stun\n");
+                update_key_from_server(key_buf, SYMMETRIC_KEY_SIZE_BYTES, next_key_version);  // get an updated key
+                printf(" server sending symm key to client\n");
+                
                 new_msg.sm = SERVER_SEND_SYMMETRIC_KEY_TO_CLIENT;
                 new_msg.len_data_bytes = SYMMETRIC_KEY_SIZE_BYTES;
                 new_msg.key_version = next_key_version; 
@@ -197,7 +199,8 @@ void handle_request(char *role, char buf[], int num_bytes_read)
             case SERVER_SEND_SYMMETRIC_KEY_TO_CLIENT:
                 printf("    client rec'd symmetric key from server, key size: %d\n", msg->len_data_bytes );
                 print_buf(msg->data, msg->len_data_bytes);
-                update_key_from_server(msg->data, msg->len_data_bytes);  // take updated key and write to stun key storage
+                printf("client rec'd updated key version %d\n", msg->key_version);
+                update_key_from_server(msg->data, msg->len_data_bytes, msg->key_version);  // take updated key and write to stun key storage
             break;
 
             default:

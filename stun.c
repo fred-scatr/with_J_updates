@@ -123,9 +123,9 @@ unsigned int cntr_nonce = 253;
 uint8_t chacha20SymKey_buf[SYMMETRIC_KEY_SIZE_BYTES+1];
 uint8_t * chacha20SymKey = &chacha20SymKey_buf[0];
 
-int update_key_from_server(uint8_t key_buf[], int key_size);
+int update_key_from_server(uint8_t key_buf[], int key_size, uint8_t key_version);
 uint16_t get_current_key_version();
-uint16_t get_next_key_version();
+uint8_t get_next_key_version();
 int key_size = SYMMETRIC_KEY_SIZE_BYTES; 
 uint16_t symmetric_key_version = 1;
 long long int server_cntr_nonce = 100;
@@ -177,8 +177,9 @@ void main(int argc, char *argv[])
 					printf("\n");
 
 					printf(" calling update key\n");
-					//chacha20_libgcrypt_init(auth_data[i].key, print_raw_encryption_logs);					
-					update_key_from_server(auth_data[i].key, KEY_LENGTH);
+					//chacha20_libgcrypt_init(auth_data[i].key, print_raw_encryption_logs);				
+
+					update_key_from_server(auth_data[i].key, KEY_LENGTH, INIT_KEY_VERSION_MAJOR);
 					update_nonce("CLIENT", i);
 
 					printf("\n memcpy nonce\n");
@@ -206,8 +207,11 @@ void main(int argc, char *argv[])
 
 
 				printf(" calling update key\n");
-				//chacha20_libgcrypt_init(auth_data[i].key, print_raw_encryption_logs);					
-				update_key_from_server(auth_data[i].key, KEY_LENGTH);
+				//chacha20_libgcrypt_init(auth_data[i].key, print_raw_encryption_logs);		
+				KEY_VERSION key_version;
+				key_version.major = INIT_KEY_VERSION_MAJOR;
+				key_version.minor = INIT_KEY_VERSION_MINOR;							
+				update_key_from_server(auth_data[i].key, KEY_LENGTH, INIT_KEY_VERSION_MAJOR);
 				//size_random_key = getrand((unsigned char *)auth_data[i].key, KEY_LENGTH);
 				//size_random_nonce = getrand((unsigned char *)auth_data[i].nonce, NONCE_LENGTH);
 				update_nonce("SERVER",i);
@@ -1085,7 +1089,7 @@ int update_nonce(char *role, int sts)
 	}
 }
 
-int update_key_from_server(uint8_t key_buf[], int key_size)  // store the updated key and init the algo with the new key value
+int update_key_from_server(uint8_t key_buf[], int key_size, uint8_t key_version)  // store the updated key and init the algo with the new key value
 {
 	if (encrypt)
 	{
@@ -1094,6 +1098,12 @@ int update_key_from_server(uint8_t key_buf[], int key_size)  // store the update
 			printf(" in update_key(), len:%d key %d: %s\n", key_size, i, key_buf);
 			memset(auth_data[i].key, 0, key_size);
 			memcpy(auth_data[i].key, key_buf, key_size);	
+			
+			// previous key version set to current key version
+			auth_data[i].previous_key_version.version = auth_data[i].current_key_version.version;
+
+			// current key version set to new key version
+			auth_data[i].current_key_version.version = key_version;
 
 			if(print_raw_encryption_logs >= 1) 
 				print_buf((uint8_t *)auth_data[i].key, key_size);
@@ -1110,7 +1120,11 @@ uint16_t get_current_key_version()
 	return symmetric_key_version;
 }
 
-uint16_t get_next_key_version()
+uint8_t get_next_key_version()
 {
-	return symmetric_key_version + 1;
+	symmetric_key_version += 1;
+	if(symmetric_key_version == 0)
+		symmetric_key_version = 1;
+	
+	return  symmetric_key_version;
 }

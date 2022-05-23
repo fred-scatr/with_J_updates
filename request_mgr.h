@@ -34,7 +34,7 @@ void client_send_request_new_key_to_server(char *role);
 void create_msg_requests();
 
 extern uint16_t get_current_key_version();
-extern uint16_t get_next_key_version();
+extern uint8_t get_next_key_version();
 
 #define MAX_MSG_DATA_SIZE 1000
 #define MSG_REQUEST_PORT_CLIENT 20000 

@@ -23,6 +23,8 @@ typedef struct
 
 #define KEY_LENGTH 32
 #define KEY_VERSION_LENGTH 2  
+#define INIT_KEY_VERSION_MINOR 0
+#define INIT_KEY_VERSION_MAJOR 1
 #define NONCE_LENGTH 12
 #define MAX_VALUE_NONCE (unsigned long)(pow(2, NONCE_LENGTH) - 1)
 
@@ -33,6 +35,7 @@ typedef struct
 {
 	uint8_t major;
 	uint8_t minor;
+	uint16_t version;
 } KEY_VERSION;
 
 typedef struct 
