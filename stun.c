@@ -115,8 +115,6 @@ int size_random_nonce = 0;
 AUTH_DATA auth_data[CHANNELCOUNT];
 int key_sent_to_client = 0;
 int encrypt = 1; 
-int port_for_key_xfer = 20000;
-const char* server_ip_for_key_xfer = "10.42.0.30";
 int print_raw_encryption_logs = 2;  // controls print of encryption logs; 0-none, 1-medium, 2-all logs
 int transfer_keys = 0;    // create keys and send via TCP connection 
 unsigned int cntr_nonce = 253;
@@ -423,7 +421,7 @@ void stun_server()
 			return;
 		}
 
-		printf("bind server to %s\n", server_ip[lp]);
+		printf("\n\nbind server to %s\n", server_ip[lp]);
 		// bind() to ensure use of specific IP address and port instead of INADDR_ANY
 		memset(&servaddr, 0, sizeof(servaddr));
 		servaddr.sin_family = AF_INET;

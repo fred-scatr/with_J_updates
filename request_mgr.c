@@ -2,6 +2,8 @@
 #include "request_mgr.h"
 #include "hkdf_conn.h"
 
+#define	CHANNELCOUNT		4    // FWW  needs to be imported from stun.c instead of copied here
+
 int msg_request_socket;
 time_t time_last_key_rotation, current_time;
 unsigned char key_rotation_required = 0;
@@ -93,6 +95,7 @@ void handle_request(char *role, char buf[], int num_bytes_read)
     print_buf(buf, num_bytes_read);
     message *msg = (message *)buf;
     message new_msg;
+    uint16_t next_key_version = 0;  // zero is invalid version number
 
     int msg_id =  (int)msg->sm;
     if(!(MIN_SYSTEM_MSG_NUMBER < msg->sm < MAX_SYSTEM_MSG_NUMBER))
@@ -130,7 +133,7 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 print_buf_char(key_buf, SYMMETRIC_KEY_SIZE_BYTES);
 
                 // increment symmetric key version to send to client
-                uint16_t next_key_version = get_next_key_version();
+                next_key_version = get_next_key_version();
                 printf(" next version of key: %d\n", next_key_version);
                 
                 printf(" server updating key in stun\n");
@@ -140,7 +143,7 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 new_msg.sm = SERVER_SEND_SYMMETRIC_KEY_TO_CLIENT;
                 new_msg.len_data_bytes = SYMMETRIC_KEY_SIZE_BYTES;
                 new_msg.key_version = next_key_version; 
-                memcpy(new_msg.data, key_buf, SYMMETRIC_KEY_SIZE_BYTES);
+                memcpy(new_msg.data, key_buf, SYMMETRIC_KEY_SIZE_BYTES);  // fww change from copy here; just send new_msg.data
                 print_buf(new_msg.data, new_msg.len_data_bytes);
                 send_msg(new_msg, role); 
             break;
@@ -154,6 +157,41 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 new_msg.len_data_bytes = 0;
                 send_msg(new_msg, role);   
             break;
+
+            case CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER:  // key version is same for all; send bytes packed into msg.data
+                printf("    client request multi symm key from server\n");
+                int num_keys_requested = 0;
+                if(msg->len_data_bytes > 0)
+                    num_keys_requested = msg->data[0];
+                printf(" num keys requested: %d\n", num_keys_requested);
+            
+                // increment symmetric key version to send to client; all common issuances of the key will have same version #
+                next_key_version = get_next_key_version();
+                printf(" next version of key: %d\n", next_key_version);
+
+                new_msg.sm = SERVER_SEND_MULTI_SYMM_KEY_TO_CLIENT;
+                new_msg.len_data_bytes = SYMMETRIC_KEY_SIZE_BYTES * num_keys_requested;
+                new_msg.key_version = next_key_version; 
+
+                for(int i=0;i<num_keys_requested;i++)  // get num_keys_requested keys and pack them into the key_buf
+                {
+                    printf(" %d, server rec'd key request update\n", i);
+
+                    hkdf(&new_msg.data[i * SYMMETRIC_KEY_SIZE_BYTES], SYMMETRIC_KEY_SIZE_BYTES);
+                    print_buf_char(new_msg.data, SYMMETRIC_KEY_SIZE_BYTES);
+
+                    print_buf(new_msg.data, new_msg.len_data_bytes);
+
+                }
+
+                send_msg(new_msg, role);                     
+                printf(" server updating multi key in stun\n");
+                //update_multi_key_from_server(key_buf, SYMMETRIC_KEY_SIZE_BYTES, next_key_version, num_keys_requested);  // get an updated key
+                printf(" server sending symm key to client\n");
+                    
+
+
+            break;        
 
             default:
             break;
@@ -191,6 +229,15 @@ void handle_request(char *role, char buf[], int num_bytes_read)
 
                 new_msg.sm = CLIENT_REQUEST_CURRENT_SERVER_KEY_VERSION;
                 new_msg.len_data_bytes = 0;
+                send_msg(new_msg, role);                
+            break;
+
+            case CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER:
+                printf(" client sending request for updated multiple symm key to server\n");
+
+                new_msg.sm = CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER;
+                new_msg.len_data_bytes = 1;
+                new_msg.data[0] = CHANNELCOUNT;
                 send_msg(new_msg, role);                
             break;
 
