@@ -58,7 +58,7 @@ int chacha20_libgcrypt_init(char * chacha20SymKey, int print_raw_encryption_logs
                gcry_strerror(gcryError));
         return -1;
     }
-    if (print_raw_encryption_logs >= 0) ("gcry_cipher_open    worked\n");
+    if (print_raw_encryption_logs >= 0) ("gcry_cipher_open worked\n");
 
     gcryError = gcry_cipher_setkey(gcryCipherHd, chacha20SymKey, keyLength);
     if (gcryError)

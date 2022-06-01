@@ -55,8 +55,9 @@ enum system_message
     CLIENT_STUNNEL_STATUS,                            // 107  0x6b
     SERVER_REQUEST_CURRENT_CLIENT_KEY_VERSION,            // 108  0x6c
     CLIENT_REQUEST_CURRENT_SERVER_KEY_VERSION,            // 109  0x6d
-    CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER,        // 110 0x6e  // create multiplle keys on server and send to client - one per channel
+/*    CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER,        // 110 0x6e  // create multiplle keys on server and send to client - one per channel
     SERVER_SEND_MULTI_SYMM_KEY_TO_CLIENT,             // 111 0x6f
+    */
     MAX_SYSTEM_MSG_NUMBER
 };
 

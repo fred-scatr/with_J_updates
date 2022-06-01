@@ -158,7 +158,7 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 send_msg(new_msg, role);   
             break;
 
-            case CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER:  // key version is same for all; send bytes packed into msg.data
+/*            case CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER:  // key version is same for all; send bytes packed into msg.data
                 printf("    client request multi symm key from server\n");
                 int num_keys_requested = 0;
                 if(msg->len_data_bytes > 0)
@@ -187,12 +187,12 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 send_msg(new_msg, role);                     
                 printf(" server updating multi key in stun\n");
                 //update_multi_key_from_server(key_buf, SYMMETRIC_KEY_SIZE_BYTES, next_key_version, num_keys_requested);  // get an updated key
-                printf(" server sending symm key to client\n");
+                printf(" server sending multi symm key to client\n");
                     
 
 
             break;        
-
+*/
             default:
             break;
         }
@@ -232,7 +232,7 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 send_msg(new_msg, role);                
             break;
 
-            case CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER:
+ /*           case CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER:
                 printf(" client sending request for updated multiple symm key to server\n");
 
                 new_msg.sm = CLIENT_REQUEST_MULTI_SYMM_KEY_FROM_SERVER;
@@ -249,7 +249,7 @@ void handle_request(char *role, char buf[], int num_bytes_read)
                 printf("client rec'd updated key version %d\n", msg->key_version);
                 update_key_from_server(msg->data, msg->len_data_bytes, msg->key_version);  // take updated key and write to stun key storage
             break;
-
+*/
             default:
             break;
         }        
